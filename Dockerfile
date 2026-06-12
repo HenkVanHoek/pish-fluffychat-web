@@ -2,13 +2,14 @@
 FROM nginx:alpine
 
 # Install tools to pull the community web release assets
-RUN apk add --no-cache wget unzip
+RUN apk add --no-cache wget tar
 
 # Download production-ready FluffyChat web client directly from the correct upstream release
 WORKDIR /tmp
-RUN wget https://github.com/krille-official/fluffychat/releases/latest/download/web.zip && \
-    unzip web.zip -d /usr/share/nginx/html && \
-    rm web.zip
+RUN wget https://github.com/krille-chan/fluffychat/releases/latest/download/fluffychat-web.tar.gz && \
+    mkdir -p /usr/share/nginx/html && \
+    tar -xzf fluffychat-web.tar.gz -C /usr/share/nginx/html --strip-components=2 && \
+    rm fluffychat-web.tar.gz
 
 # Copy local entrypoint script to handle runtime domain injection
 COPY entrypoint.sh /entrypoint.sh
