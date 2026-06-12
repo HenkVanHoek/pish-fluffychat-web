@@ -1,0 +1,25 @@
+# This service definition is designed to be parsed by the PiSelfhosting metadata engine
+services:
+  fluffychat-web:
+    container_name: pish-fluffychat-web
+    build:
+      # Points to the local directory context within the repository during execution
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # Dynamic variable that the PiSelfhosting configuration engine will map to the local system domain
+      - HOMESERVER_DOMAIN=${PISH_DOMAIN:-piselfhosting.com}
+    ports:
+      # Exposed port for Nginx Proxy Manager integration (Host:Container)
+      # The AI engine can dynamically map the host port to prevent collisions (e.g., 8080)
+      - "${FLUFFYCHAT_WEB_PORT:-8080}:80"
+    networks:
+      - proxy-network
+    labels:
+      # Ingress routing configuration handled if Traefik is used
+      - "traefik.enable=true"
+      - "traefik.http.routers.fluffychat.rule=Host(`chat.${PISH_DOMAIN:-piselfhosting.com}`)"
+      - "traefik.http.routers.fluffychat.entrypoints=websecure"
+      - "traefik.http.routers.fluffychat.tls=true"
+      - "traefik.http.services.fluffychat.loadbalancer.server.port=80"
