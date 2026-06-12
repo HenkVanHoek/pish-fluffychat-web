@@ -7,8 +7,9 @@ RUN apk add --no-cache wget tar
 # Download production-ready FluffyChat web client directly from the correct upstream release
 WORKDIR /tmp
 RUN wget https://github.com/krille-chan/fluffychat/releases/latest/download/fluffychat-web.tar.gz && \
-    mkdir -p /usr/share/nginx/html && \
-    tar -xzf fluffychat-web.tar.gz -C /usr/share/nginx/html --strip-components=2 && \
+    mkdir -p /usr/share/nginx/html/web && \
+    tar -xzf fluffychat-web.tar.gz -C /usr/share/nginx/html/web --strip-components=2 && \
+    echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/web/"></head><body>Redirecting...</body></html>' > /usr/share/nginx/html/index.html && \
     rm fluffychat-web.tar.gz
 
 # Copy local entrypoint script to handle runtime domain injection
