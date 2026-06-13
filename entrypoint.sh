@@ -2,6 +2,7 @@
 # Entrypoint script to configure FluffyChat web client based on the selected framework mode
 
 CONFIG_FILE="/usr/share/nginx/html/web/config.json"
+JS_FILE="/usr/share/nginx/html/web/main.dart.js"
 
 if [ "$CHAT_MODE" = "your-own-domain" ]; then
     echo "Configuring FluffyChat for Dedicated Domain Mode..."
@@ -9,15 +10,18 @@ if [ "$CHAT_MODE" = "your-own-domain" ]; then
     # Ensure the target directory exists
     mkdir -p /usr/share/nginx/html/web
     
-    # Generate the exact JSON configuration required by modern FluffyChat builds
+    # Generate the local JSON configuration
     echo "{\"default_homeserver_url\": \"https://${HOMESERVER_DOMAIN}\"}" > $CONFIG_FILE
     
-    # Block the upstream application from falling back to the external GitHub homeserver list
-    # by overriding internal routing logic if necessary.
+    # Force the compiled JavaScript to look at our domain instead of the public GitHub repo list
+    if [ -f "$JS_FILE" ]; then
+        echo "Patching FluffyChat source code to lock homeserver routing..."
+        sed -i 's|https://raw.githubusercontent.com/krille-chan/fluffychat/refs/heads/main/recommended_homeservers.json|/web/config.json|g' $JS_FILE
+    fi
+    
     echo "Target homeserver locked to: https://${HOMESERVER_DOMAIN}"
 else
     echo "Configuring FluffyChat for Standard Open Mode..."
-    # In standard mode, we remove any explicit config to let the client default to its open UI
     rm -f $CONFIG_FILE
 fi
 
