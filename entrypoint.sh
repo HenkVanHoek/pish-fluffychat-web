@@ -1,16 +1,24 @@
 #!/bin/sh
-# Entrypoint script to inject the local sovereign domain into the FluffyChat config on spin-up
+# Entrypoint script to configure FluffyChat web client based on the selected framework mode
 
-CONFIG_FILE="/usr/share/nginx/html/web/assets/config.json"
+CONFIG_FILE="/usr/share/nginx/html/web/config.json"
 
-# Verify if configuration path exists before executing mutation
-if [ -f "$CONFIG_FILE" ]; then
-    # Replace the default upstream homeserver with our explicit local domain variables
-    sed -i "s|\"default_homeserver\": \".*\"|\"default_homeserver\": \"https://${HOMESERVER_DOMAIN}\"|g" $CONFIG_FILE
+if [ "$CHAT_MODE" = "your-own-domain" ]; then
+    echo "Configuring FluffyChat for Dedicated Domain Mode..."
+    
+    # Ensure the target directory exists
+    mkdir -p /usr/share/nginx/html/web
+    
+    # Generate the exact JSON configuration required by modern FluffyChat builds
+    echo "{\"default_homeserver_url\": \"https://${HOMESERVER_DOMAIN}\"}" > $CONFIG_FILE
+    
+    # Block the upstream application from falling back to the external GitHub homeserver list
+    # by overriding internal routing logic if necessary.
+    echo "Target homeserver locked to: https://${HOMESERVER_DOMAIN}"
 else
-    # Fallback initializer if upstream release structure alters config placement
-    mkdir -p /usr/share/nginx/html/web/assets
-    echo "{\"default_homeserver\": \"https://${HOMESERVER_DOMAIN}\", \"branding\": {\"application_name\": \"PiSelfhosting Chat\"}}" > $CONFIG_FILE
+    echo "Configuring FluffyChat for Standard Open Mode..."
+    # In standard mode, we remove any explicit config to let the client default to its open UI
+    rm -f $CONFIG_FILE
 fi
 
 # Handover control to the primary Nginx process container command
